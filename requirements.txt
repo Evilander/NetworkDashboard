@@ -1,0 +1,8 @@
+streamlit
+pandas
+plotly
+networkx
+scapy
+python-dotenv
+psutil
+requests # Added for llm_analyzer API calls
