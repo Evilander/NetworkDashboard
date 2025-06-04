@@ -23,6 +23,7 @@ from dashboard_views import (
     # Note: visualizations module functions are typically called *within*
     # the dashboard_views functions, so direct import here might not be needed.
 )
+from ai_solution_center import display_ai_solution_center
 from config import (
     logger, DB_PATH, AUTO_REFRESH_DEFAULT,
     REFRESH_INTERVAL_DEFAULT, DEFAULT_TIMEFRAME,
@@ -318,7 +319,7 @@ def main() -> None:
 
         # View selection
         st.subheader("View Selection")
-        view_options = ["Dashboard", "Network Graph", "Top Talkers", "Trend Analysis", "Security Insights"]
+        view_options = ["Dashboard", "Network Graph", "Top Talkers", "Trend Analysis", "Security Insights", "AI Solution Center"]
         current_view_index = view_options.index(st.session_state.selected_view) if st.session_state.selected_view in view_options else 0
         selected_view = st.radio(
             "Select view:",
@@ -443,6 +444,8 @@ def main() -> None:
         display_trend_analysis_view()
     elif st.session_state.selected_view == "Security Insights":
         display_security_insights_view()
+    elif st.session_state.selected_view == "AI Solution Center":
+        display_ai_solution_center()
     else:
         # Fallback if view state is somehow invalid
         st.error(f"Invalid view selected: {st.session_state.selected_view}")
