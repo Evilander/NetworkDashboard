@@ -17,6 +17,8 @@ A Streamlit-based dashboard for real-time network traffic monitoring, analysis, 
 *   **Data Management:** Options to optimize the database, clean up old data, and reset the dashboard.
 *   **Memory Management:** Monitors RAM usage and performs cleanup actions to prevent crashes.
 *   **Configurable:** Settings managed via environment variables (`.env` file).
+*   **AI Solution Center:** Chat in real time with multiple providers (OpenAI, Anthropic Claude, Google Gemini) and optional ElevenLabs voice output.
+*   **Freshdesk Integration:** View latest support tickets directly in the dashboard with automatic refresh.
 
 
 ## Requirements
@@ -59,6 +61,9 @@ A Streamlit-based dashboard for real-time network traffic monitoring, analysis, 
     *   Edit the `.env` file with your settings:
         *   **`LLM_API_KEY` (Optional):** Add your API key if you want to use the LLM-based security insights.
         *   **`LLM_API_ENDPOINT` & `LLM_MODEL` (Optional):** Adjust if using a different LLM provider or model.
+        *   **`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` (Optional):** API keys for the AI Solution Center providers.
+        *   **`ELEVENLABS_API_KEY` (Optional):** Enable voice responses in the AI Solution Center.
+        *   **`FRESHDESK_DOMAIN` & `FRESHDESK_API_KEY` (Optional):** Configure Freshdesk ticket integration.
         *   Other settings (DB path, memory limits, etc.) can be adjusted if needed, otherwise defaults will be used.
     *   **IMPORTANT:** Never commit your `.env` file to version control. It's included in `.gitignore`.
 
@@ -80,6 +85,9 @@ A Streamlit-based dashboard for real-time network traffic monitoring, analysis, 
 Most configuration is handled via the `.env` file (see `Installation` step 4 and `.env.example`). Key options include:
 
 *   `LLM_API_KEY`, `LLM_API_ENDPOINT`, `LLM_MODEL`: For LLM integration.
+*   `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`: Keys for the AI Solution Center providers.
+*   `ELEVENLABS_API_KEY`: Enable voice output for AI responses.
+*   `FRESHDESK_DOMAIN`, `FRESHDESK_API_KEY`: Freshdesk ticket integration.
 *   `DB_PATH`: Location to store the traffic database.
 *   `MEMORY_WARNING_THRESHOLD`, `MEMORY_CRITICAL_THRESHOLD`: RAM usage thresholds for warnings and cleanup.
 *   `AUTO_CLEANUP_DAYS`: How long to retain packet data.
