@@ -114,7 +114,9 @@ def initialize_session_state():
         st.session_state.selected_timeframe = DEFAULT_TIMEFRAME
         st.session_state.selected_protocols = []
         st.session_state.selected_view = "Dashboard"
-        st.session_state.show_reset_confirm = False
+        st.session_state.show_reset_modal = False
+        st.session_state.show_cleanup_modal = False
+        st.session_state.show_optimize_modal = False
         # Initialize a random cache key for dashboard_views caching functions
         st.session_state.cache_key = f"cache-{random.randint(1, 1000000)}-{time.time()}"
 
@@ -348,84 +350,114 @@ def main() -> None:
 
         # Optimize Database
         if st.button("Optimize Database", key="optimize_db_button", use_container_width=True, help="Reclaims unused space and optimizes DB structure."):
-             if st.session_state.processor:
-                 with st.spinner("Optimizing database... This might take a moment."):
-                     try:
-                        st.session_state.processor.db.optimize_database()
-                        # Clean memory after potential large operation
-                        if 'memory_manager' in st.session_state and st.session_state.memory_manager:
-                            st.session_state.memory_manager.manual_cleanup()
-                        st.success("Database optimized successfully!")
-                        time.sleep(1) # Pause for user to see success
-                     except Exception as e:
-                         logger.error(f"Error optimizing database: {e}", exc_info=True)
-                         st.error(f"Database optimization failed: {e}")
-             else:
-                 st.warning("Packet processor not available.")
+            st.session_state.show_optimize_modal = True
+
+        if st.session_state.get('show_optimize_modal', False):
+            with st.modal('Confirm Optimization'):
+                st.info("This will reclaim unused space and may take some time.")
+                opt_col1, opt_col2 = st.columns(2)
+                with opt_col1:
+                    if st.button("✓ Run Optimization", key="confirm_optimize_button", use_container_width=True):
+                        if st.session_state.processor:
+                            with st.spinner("Optimizing database... This might take a moment."):
+                                try:
+                                    st.session_state.processor.db.optimize_database()
+                                    if 'memory_manager' in st.session_state and st.session_state.memory_manager:
+                                        st.session_state.memory_manager.manual_cleanup()
+                                    st.success("Database optimized successfully!")
+                                    st.session_state.show_optimize_modal = False
+                                    time.sleep(1)
+                                    st.rerun()
+                                except Exception as e:
+                                    logger.error(f"Error optimizing database: {e}", exc_info=True)
+                                    st.error(f"Database optimization failed: {e}")
+                        else:
+                            st.warning("Packet processor not available.")
+                            st.session_state.show_optimize_modal = False
+                with opt_col2:
+                    if st.button("✕ Cancel", key="cancel_optimize_button", use_container_width=True):
+                        st.session_state.show_optimize_modal = False
+                        st.rerun()
 
         # Cleanup Old Data
         cleanup_col1, cleanup_col2 = st.columns([3, 1])
         with cleanup_col1:
-            # Ensure value is reasonable, default to config or 30
             default_days = getattr(st.session_state.processor.db, 'AUTO_CLEANUP_DAYS', 30) if st.session_state.processor else 30
             days_to_keep = st.number_input("Days of data to keep:", min_value=1, max_value=365, value=default_days, key="cleanup_days_input")
         with cleanup_col2:
-            st.markdown('<div style="margin-top: 28px;"></div>', unsafe_allow_html=True) # Align button vertically
+            st.markdown('<div style="margin-top: 28px;"></div>', unsafe_allow_html=True)
             if st.button("Cleanup", key="cleanup_button", use_container_width=True, help=f"Remove data older than {days_to_keep} days."):
-                if st.session_state.processor:
-                    with st.spinner(f"Cleaning up data older than {days_to_keep} days..."):
-                        try:
-                            st.session_state.processor.db.cleanup_old_data(days_to_keep=days_to_keep)
-                            reset_cache() # Data changed, clear cache
-                            if 'memory_manager' in st.session_state and st.session_state.memory_manager:
-                                st.session_state.memory_manager.manual_cleanup()
-                            st.success(f"Cleaned up data older than {days_to_keep} days.")
-                            st.session_state.last_refresh = time.time()
-                            time.sleep(1)
-                            st.rerun() # Refresh view after cleanup
-                        except Exception as e:
-                            logger.error(f"Error cleaning up old data: {e}", exc_info=True)
-                            st.error(f"Data cleanup failed: {e}")
-                else:
-                    st.warning("Packet processor not available.")
+                st.session_state.cleanup_days_to_keep = days_to_keep
+                st.session_state.show_cleanup_modal = True
+
+        if st.session_state.get('show_cleanup_modal', False):
+            with st.modal('Confirm Cleanup'):
+                days = st.session_state.get('cleanup_days_to_keep', days_to_keep)
+                st.warning(f"This will remove data older than {days} days.")
+                clean_col1, clean_col2 = st.columns(2)
+                with clean_col1:
+                    if st.button("✓ Yes, Cleanup", key="confirm_cleanup_button", use_container_width=True):
+                        if st.session_state.processor:
+                            with st.spinner(f"Cleaning up data older than {days} days..."):
+                                try:
+                                    st.session_state.processor.db.cleanup_old_data(days_to_keep=days)
+                                    reset_cache()
+                                    if 'memory_manager' in st.session_state and st.session_state.memory_manager:
+                                        st.session_state.memory_manager.manual_cleanup()
+                                    st.success(f"Cleaned up data older than {days} days.")
+                                    st.session_state.last_refresh = time.time()
+                                    st.session_state.show_cleanup_modal = False
+                                    time.sleep(1)
+                                    st.rerun()
+                                except Exception as e:
+                                    logger.error(f"Error cleaning up old data: {e}", exc_info=True)
+                                    st.error(f"Data cleanup failed: {e}")
+                        else:
+                            st.warning("Packet processor not available.")
+                            st.session_state.show_cleanup_modal = False
+                with clean_col2:
+                    if st.button("✕ Cancel", key="cancel_cleanup_button", use_container_width=True):
+                        st.session_state.show_cleanup_modal = False
+                        st.rerun()
 
         st.markdown("<hr style='margin-top:1rem; margin-bottom:1rem;'>", unsafe_allow_html=True)
 
         # Reset Dashboard (Clear All Data)
         if st.button("⚠️ Reset Dashboard", key="reset_dashboard_button", use_container_width=True, help="Deletes ALL captured data and resets the dashboard."):
-            st.session_state.show_reset_confirm = True
+            st.session_state.show_reset_modal = True
 
-        if st.session_state.get('show_reset_confirm', False):
-            st.warning("🚨 **Confirm Reset** 🚨\n\nThis action will permanently delete **ALL** captured network data from the database. This cannot be undone.")
-            confirm_col1, confirm_col2 = st.columns(2)
-            with confirm_col1:
-                if st.button("✓ Yes, Delete Everything", key="confirm_reset_button", use_container_width=True):
-                    if st.session_state.processor:
-                        with st.spinner("Resetting dashboard and clearing all data..."):
-                            try:
-                                success = st.session_state.processor.db.clear_all_data()
-                                if success:
-                                    st.session_state.show_reset_confirm = False
-                                    st.session_state.start_time = time.time() # Reset session start time
-                                    reset_cache() # Clear any potentially stale cached data
-                                    if 'memory_manager' in st.session_state and st.session_state.memory_manager:
-                                        st.session_state.memory_manager.manual_cleanup() # Clean memory
-                                    st.success("All data cleared. Dashboard reset!")
-                                    st.session_state.last_refresh = time.time()
-                                    time.sleep(1.5)
-                                    st.rerun() # Force a full refresh
-                                else:
-                                    st.error("Error clearing data. Please check logs.")
-                            except Exception as e:
-                                logger.error(f"Error during dashboard reset: {e}", exc_info=True)
-                                st.error(f"Dashboard reset failed: {e}")
+        if st.session_state.get('show_reset_modal', False):
+            with st.modal('Confirm Reset'):
+                st.warning("🚨 **Confirm Reset** 🚨\n\nThis action will permanently delete **ALL** captured network data from the database. This cannot be undone.")
+                confirm_col1, confirm_col2 = st.columns(2)
+                with confirm_col1:
+                    if st.button("✓ Yes, Delete Everything", key="confirm_reset_button", use_container_width=True):
+                        if st.session_state.processor:
+                            with st.spinner("Resetting dashboard and clearing all data..."):
+                                try:
+                                    success = st.session_state.processor.db.clear_all_data()
+                                    if success:
+                                        st.session_state.show_reset_modal = False
+                                        st.session_state.start_time = time.time()  # Reset session start time
+                                        reset_cache()  # Clear any potentially stale cached data
+                                        if 'memory_manager' in st.session_state and st.session_state.memory_manager:
+                                            st.session_state.memory_manager.manual_cleanup()  # Clean memory
+                                        st.success("All data cleared. Dashboard reset!")
+                                        st.session_state.last_refresh = time.time()
+                                        time.sleep(1.5)
+                                        st.rerun()  # Force a full refresh
+                                    else:
+                                        st.error("Error clearing data. Please check logs.")
+                                except Exception as e:
+                                    logger.error(f"Error during dashboard reset: {e}", exc_info=True)
+                                    st.error(f"Dashboard reset failed: {e}")
                     else:
                          st.warning("Packet processor not available.")
-                         st.session_state.show_reset_confirm = False # Hide confirmation if cannot proceed
+                         st.session_state.show_reset_modal = False # Hide confirmation if cannot proceed
 
             with confirm_col2:
                 if st.button("✕ Cancel", key="cancel_reset_button", use_container_width=True):
-                    st.session_state.show_reset_confirm = False
+                    st.session_state.show_reset_modal = False
                     st.rerun()
 
         st.markdown('</div>', unsafe_allow_html=True) # End danger-zone div
