@@ -45,60 +45,72 @@ except ImportError:
         warning_threshold = 70 # Default values for display logic
         critical_threshold = 85
 
-# Set up page configuration
-st.set_page_config(
-    page_title="Network Analysis Dashboard", # Generalized title
-    page_icon="🌐",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
-# Custom CSS for styling (remains generic)
-st.markdown("""
-<style>
-    .main .block-container {padding-top: 2rem; padding-bottom: 2rem;}
-    .stMetric {background-color: #f0f2f6; padding: 10px; border-radius: 5px;}
-    .stAlert {border-radius: 5px;}
-    h1, h2, h3 {padding-top: 1rem; padding-bottom: 0.5rem;}
-    .stTabs [data-baseweb="tab-list"] {gap: 10px;}
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        white-space: pre-wrap;
-        border-radius: 5px 5px 0px 0px;
-    }
-    .highlight {
-        background-color: #f0f7fb;
-        padding: 10px;
-        border-left: 5px solid #3498db;
-        margin-bottom: 10px;
-    }
-    .danger-zone {
-        background-color: #fff8f8;
-        padding: 15px;
-        border-left: 5px solid #e74c3c;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-    }
-    .stButton button {
-        width: 100%;
-    }
-    .memory-usage-bar {
-        margin-top: 10px;
-        margin-bottom: 10px;
-        width: 100%;
-        height: 20px;
-        background-color: #e0e0e0;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .memory-usage-fill {
-        height: 100%;
-        border-radius: 10px;
-        transition: width 0.5s ease-in-out;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Default theme when the app first loads
+DEFAULT_THEME = "light"
+
+def apply_theme_css(theme: str) -> None:
+    """Inject CSS styles based on the selected theme."""
+    if theme == "dark":
+        metric_bg = "#262730"
+        highlight_bg = "#1f2d3a"
+        danger_bg = "#2d1f1f"
+        text_color = "#FAFAFA"
+        page_bg = "#0e1117"
+    else:
+        metric_bg = "#f0f2f6"
+        highlight_bg = "#f0f7fb"
+        danger_bg = "#fff8f8"
+        text_color = "#000000"
+        page_bg = "#FFFFFF"
+
+    st.markdown(
+        f"""
+        <style>
+            .stApp {{background-color: {page_bg}; color: {text_color};}}
+            .main .block-container {{padding-top: 2rem; padding-bottom: 2rem;}}
+            .stMetric {{background-color: {metric_bg}; padding: 10px; border-radius: 5px;}}
+            .stAlert {{border-radius: 5px;}}
+            h1, h2, h3 {{padding-top: 1rem; padding-bottom: 0.5rem;}}
+            .stTabs [data-baseweb="tab-list"] {{gap: 10px;}}
+            .stTabs [data-baseweb="tab"] {{
+                height: 50px;
+                white-space: pre-wrap;
+                border-radius: 5px 5px 0px 0px;
+            }}
+            .highlight {{
+                background-color: {highlight_bg};
+                padding: 10px;
+                border-left: 5px solid #3498db;
+                margin-bottom: 10px;
+            }}
+            .danger-zone {{
+                background-color: {danger_bg};
+                padding: 15px;
+                border-left: 5px solid #e74c3c;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                border-radius: 5px;
+            }}
+            .stButton button {{width: 100%;}}
+            .memory-usage-bar {{
+                margin-top: 10px;
+                margin-bottom: 10px;
+                width: 100%;
+                height: 20px;
+                background-color: #e0e0e0;
+                border-radius: 10px;
+                overflow: hidden;
+            }}
+            .memory-usage-fill {{
+                height: 100%;
+                border-radius: 10px;
+                transition: width 0.5s ease-in-out;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def initialize_session_state():
     """Initialize or update session state variables if not already present."""
@@ -115,6 +127,7 @@ def initialize_session_state():
         st.session_state.selected_protocols = []
         st.session_state.selected_view = "Dashboard"
         st.session_state.show_reset_confirm = False
+        st.session_state.theme = DEFAULT_THEME
         # Initialize a random cache key for dashboard_views caching functions
         st.session_state.cache_key = f"cache-{random.randint(1, 1000000)}-{time.time()}"
 
@@ -216,7 +229,17 @@ def display_memory_usage():
 def main() -> None:
     """Main function to run the Streamlit dashboard application."""
 
-    initialize_session_state() # Ensure state is initialized
+    initialize_session_state()  # Ensure state is initialized
+
+    # Set up page configuration based on the selected theme
+    st.set_page_config(
+        page_title="Network Analysis Dashboard",
+        page_icon="🌐",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+
+    apply_theme_css(st.session_state.theme)
 
     # --- Dashboard Title and Optional Logo ---
     st.markdown("<h1 style='text-align: center;'> 🌐 Network Analysis Dashboard 🌐</h1>", unsafe_allow_html=True)
@@ -247,6 +270,15 @@ def main() -> None:
     # --- Sidebar ---
     with st.sidebar:
         st.header("Settings & Filters")
+
+        # Theme toggle
+        st.subheader("Theme")
+        dark_mode = st.toggle(
+            "Dark mode",
+            value=st.session_state.theme == "dark",
+            key="theme_toggle",
+        )
+        st.session_state.theme = "dark" if dark_mode else "light"
 
         # Display memory usage
         display_memory_usage()
