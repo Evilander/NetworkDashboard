@@ -246,6 +246,26 @@ def main() -> None:
          # Optionally st.stop() here if the dashboard is unusable without the processor
          # return
 
+    # --- Tab Navigation ---
+    view_tabs = [
+        "Dashboard",
+        "Network Graph",
+        "Top Talkers",
+        "Trend Analysis",
+        "Security Insights",
+    ]
+
+    # Ensure tab index persists across reruns and sync with selected_view
+    if "main_tabs" not in st.session_state:
+        st.session_state.main_tabs = (
+            view_tabs.index(st.session_state.selected_view)
+            if st.session_state.selected_view in view_tabs
+            else 0
+        )
+
+    tabs = st.tabs(view_tabs, key="main_tabs")
+    st.session_state.selected_view = view_tabs[st.session_state.main_tabs]
+
     # --- Sidebar ---
     with st.sidebar:
         st.header("Settings & Filters")
@@ -318,20 +338,7 @@ def main() -> None:
             st.session_state.last_refresh = time.time()
             st.rerun()
 
-        # View selection
-        st.subheader("View Selection")
-        view_options = ["Dashboard", "Network Graph", "Top Talkers", "Trend Analysis", "Security Insights"]
-        current_view_index = view_options.index(st.session_state.selected_view) if st.session_state.selected_view in view_options else 0
-        selected_view = st.radio(
-            "Select view:",
-            options=view_options,
-            index=current_view_index,
-            key="view_radio"
-        )
-        if selected_view != st.session_state.selected_view:
-            st.session_state.selected_view = selected_view
-            # No need to reset cache here unless views share cached data in an incompatible way
-            st.rerun() # Rerun to switch view
+        # View selection handled by tabs in the main area
 
         # Database info
         st.subheader("Database Info")
@@ -464,21 +471,27 @@ def main() -> None:
 
 
     # --- Main Content Area ---
-    # Render the selected view using functions from dashboard_views
-    if st.session_state.selected_view == "Dashboard":
-        display_dashboard_view()
-    elif st.session_state.selected_view == "Network Graph":
-        display_network_graph_view()
-    elif st.session_state.selected_view == "Top Talkers":
-        display_top_talkers_view()
-    elif st.session_state.selected_view == "Trend Analysis":
-        display_trend_analysis_view()
-    elif st.session_state.selected_view == "Security Insights":
-        display_security_insights_view()
-    else:
-        # Fallback if view state is somehow invalid
-        st.error(f"Invalid view selected: {st.session_state.selected_view}")
-        display_dashboard_view() # Show default dashboard
+    selected_index = st.session_state.main_tabs
+
+    with tabs[0]:
+        if selected_index == 0:
+            display_dashboard_view()
+
+    with tabs[1]:
+        if selected_index == 1:
+            display_network_graph_view()
+
+    with tabs[2]:
+        if selected_index == 2:
+            display_top_talkers_view()
+
+    with tabs[3]:
+        if selected_index == 3:
+            display_trend_analysis_view()
+
+    with tabs[4]:
+        if selected_index == 4:
+            display_security_insights_view()
 
     # --- Auto Refresh Logic ---
     if st.session_state.auto_refresh:
