@@ -19,6 +19,7 @@ from dashboard_views import (
     display_top_talkers_view,
     display_trend_analysis_view,
     display_security_insights_view,
+    display_ai_solution_center_view,
     reset_cache
     # Note: visualizations module functions are typically called *within*
     # the dashboard_views functions, so direct import here might not be needed.
@@ -274,6 +275,7 @@ def main() -> None:
         "Top Talkers",
         "Trend Analysis",
         "Security Insights",
+        "AI Solution Center",
     ]
 
     # Ensure tab index persists across reruns and sync with selected_view
@@ -523,6 +525,10 @@ def main() -> None:
     with tabs[4]:
         if selected_index == 4:
             display_security_insights_view()
+
+    with tabs[5]:
+        if selected_index == 5:
+            display_ai_solution_center_view()
 
     # --- Auto Refresh Logic ---
     if st.session_state.auto_refresh:
