@@ -487,3 +487,22 @@ def display_security_insights_view() -> None:
                     st.dataframe(dest_df, use_container_width=True)
         else:
             st.info("No detailed statistics available.")
+
+def display_ai_solution_center_view() -> None:
+    """Display AI Solution Center with Freshdesk search."""
+    st.header("AI Solution Center")
+
+    query = st.text_input("Search Freshdesk articles:")
+    if query:
+        with st.spinner("Searching Freshdesk..."):
+            from solution_center import search_articles
+            results = search_articles(query)
+            if isinstance(results, dict) and results.get("error"):
+                st.error(results["error"])
+            elif results:
+                for article in results:
+                    title = article.get("title", "Untitled")
+                    url = article.get("url", "#")
+                    st.markdown(f"- [{title}]({url})")
+            else:
+                st.info("No articles found.")
