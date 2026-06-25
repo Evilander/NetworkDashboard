@@ -1,5 +1,3 @@
-# --- START OF FILE dashboard.py ---
-
 import streamlit as st
 import time
 import pandas as pd
@@ -68,10 +66,32 @@ def apply_theme_css(theme: str) -> None:
     st.markdown(
         f"""
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
             .stApp {{background-color: {page_bg}; color: {text_color};}}
             .main .block-container {{padding-top: 2rem; padding-bottom: 2rem;}}
             .stMetric {{background-color: {metric_bg}; padding: 10px; border-radius: 5px;}}
             .stAlert {{border-radius: 5px;}}
+
+            /* Headings: Space Grotesk for a distinctive display voice */
+            h1, h2, h3, h4, h5, h6,
+            .stApp [data-testid="stHeader"],
+            .stTabs [data-baseweb="tab"] {{
+                font-family: 'Space Grotesk', system-ui, sans-serif;
+                letter-spacing: -0.01em;
+            }}
+
+            /* Numerics: JetBrains Mono for IPs, packet counts, metrics and tables */
+            [data-testid="stMetricValue"],
+            [data-testid="stMetricDelta"],
+            .stDataFrame, .stTable,
+            .stDataFrame td, .stDataFrame th,
+            table td, table th,
+            code, pre {{
+                font-family: 'JetBrains Mono', ui-monospace, 'Courier New', monospace;
+                font-variant-numeric: tabular-nums;
+            }}
+
             h1, h2, h3 {{padding-top: 1rem; padding-bottom: 0.5rem;}}
             .stTabs [data-baseweb="tab-list"] {{gap: 10px;}}
             .stTabs [data-baseweb="tab"] {{
@@ -558,5 +578,3 @@ if __name__ == "__main__":
     logger.info("Starting Network Analysis Dashboard application.")
     main()
     logger.info("Network Analysis Dashboard application finished.")
-
-# --- END OF FILE dashboard.py ---
