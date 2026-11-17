@@ -174,7 +174,7 @@ class LLMAnalyzer:
         insights = []
         
         # Check if we should use cached insights
-        cache_key = f"insights_{datetime.now().strftime('%Y%m%d%h')}"
+        cache_key = f"insights_{datetime.now().strftime('%Y%m%d%H')}"
         if cache_key in self.cache and datetime.now().timestamp() < self.cache_expiry.get(cache_key, 0):
             return self.cache[cache_key]
         
@@ -230,7 +230,6 @@ class LLMAnalyzer:
     
     def _get_llm_insights(self, data: pd.DataFrame, stats: Dict[str, Any], anomalies: List[Dict[str, Any]]) -> List[str]:
         """Use LLM to generate advanced insights"""
-        # This is a placeholder for integration with an LLM API
         try:
             if not self.api_key or not self.api_endpoint:
                 return []
